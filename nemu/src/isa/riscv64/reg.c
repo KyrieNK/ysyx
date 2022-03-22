@@ -9,8 +9,28 @@ const char *regs[] = {
 };
 
 void isa_reg_display() {
+  int len = 32;
+
+  for(int i = 0;i < len; i++){
+    printf("%s  0x%04lx\n",regs[i],gpr(i));
+  } 
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
-  return 0;
+ *success = true;
+ int i;
+
+ //printf("1111\n");
+
+ for (i = 0; i < 32; i++){
+	  if(strcmp(regs[i], s) == 0) 
+    {
+        //printf("i = %d\n",i);
+        return gpr(i);
+    }
+ }
+
+ *success = false;
+ return 0;
+
 }

@@ -3,6 +3,9 @@
 
 #include <common.h>
 
-word_t expr(char *e, bool *success);
+uint32_t expr(char *e, bool *success);
+void expr_loop();
+
+
 
 #endif
