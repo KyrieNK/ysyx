@@ -7,8 +7,18 @@
 #define Mr vaddr_read
 #define Mw vaddr_write
 
+/*
+* TIPE_I: addi、ld
+* TYPE_U: auipc、
+* TYPE_S：sd 
+* TYPE_UJ: jal
+* mv li ret
+*/
+
 enum {
   TYPE_I, TYPE_U, TYPE_S,
+  TYPE_UJ,
+  TYPE_LI,
   TYPE_N, // none
 };
 
@@ -22,19 +32,36 @@ enum {
 static word_t immI(uint32_t i) { return SEXT(BITS(i, 31, 20), 12); }
 static word_t immU(uint32_t i) { return SEXT(BITS(i, 31, 12), 20) << 12; }
 static word_t immS(uint32_t i) { return (SEXT(BITS(i, 31, 25), 7) << 5) | BITS(i, 11, 7); }
-
+//static word_t _immUJ(uint32_t i) {return SEXT(BITS(i, 31, 12), 20);}
+static word_t immUJ(uint32_t i) {
+  word_t imm_1 = SEXT(BITS(i, 31, 31),1) << 20;
+  word_t imm_2 = SEXT(BITS(i, 30, 21),12) << 1;
+  word_t imm_3 = SEXT(BITS(i, 20, 20),1) << 11;
+  word_t imm_4 = SEXT(BITS(i, 19, 12),8) << 12;
+  // printf("imm_1 == %lx\n",imm_1);
+  // printf("imm_2 == %lx\n",imm_2);
+  // printf("imm_3 == %lx\n",imm_3);
+  // printf("imm_4 == %lx\n",imm_4);
+  return (imm_1 | imm_2 | imm_3 | imm_4);
+}
+//SEXT(BITS(SEXT(BITS(i, 31, 12), 20),19,19)) << 20 
 static void decode_operand(Decode *s, word_t *dest, word_t *src1, word_t *src2, int type) {
+  static int k = 1;
   uint32_t i = s->isa.inst.val;
   int rd  = BITS(i, 11, 7);
   int rs1 = BITS(i, 19, 15);
   int rs2 = BITS(i, 24, 20);
   destR(rd);
   switch (type) {
-    case TYPE_I: src1R(rs1);     src2I(immI(i)); break;
-    case TYPE_U: src1I(immU(i)); break;
-    case TYPE_S: destI(immS(i)); src1R(rs1); src2R(rs2); break;
+    case TYPE_I: src1R(rs1);     src2I(immI(i));printf("pc %lx :TYPE_I\n",s->pc); break;
+    case TYPE_U: src1I(immU(i)); printf("pc %lx :TYPE_U\n",s->pc);break;
+    case TYPE_S: destI(immS(i)); src1R(rs1); src2R(rs2);printf("pc %lx :TYPE_S\n",s->pc); break;
+    case TYPE_UJ: src1I(immUJ(i)); printf("pc %lx :TYPE_UJ\n",s->pc); break;
+    //case TYPE_LI: src1I(immI(i)); break;
   }
+  k++;
 }
+//| (SEXT(BITS(SEXT(BITS(i, 31, 12), 20),18, 11)) << 12) | (SEXT(BITS(SEXT(BITS(i, 31, 12), 20),10, 10)) << 11) (SEXT(BITS(SEXT(BITS(i, 31, 12), 20),9, 0)) << 1)
 
 static int decode_exec(Decode *s) {
   word_t dest = 0, src1 = 0, src2 = 0;
@@ -50,7 +77,11 @@ static int decode_exec(Decode *s) {
   INSTPAT("??????? ????? ????? ??? ????? 00101 11", auipc  , U, R(dest) = src1 + s->pc);
   INSTPAT("??????? ????? ????? 011 ????? 00000 11", ld     , I, R(dest) = Mr(src1 + src2, 8));
   INSTPAT("??????? ????? ????? 011 ????? 01000 11", sd     , S, Mw(src1 + dest, 8, src2));
-
+  INSTPAT("??????? ????? ????? 000 ????? 00100 11", addi   , I, R(dest) = src1 + src2);
+  INSTPAT("??????? ????? ????? ??? ????? 11011 11", jal    , UJ, R(dest) = s->pc + 4,s->dnpc = s->pc + src1);
+  INSTPAT("??????? ????? ????? 000 ????? 11001 11", jalr   , I,  R(dest) = s->pc + 4,s->dnpc = src1 + src2);
+  /*INSTPAT("??????? ????? ????? 000 ????? 00100 11", li     , I, R(dest) = src1);*/
+  printf("before ebreak\n");
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
   INSTPAT_END();
