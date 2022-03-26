@@ -34,11 +34,11 @@ word_t offset;
 static word_t immI(uint32_t i) 
 { 
   if(BITS(i, 14, 12) == 5) {//srai
-    printf("srai\n");
+    //printf("srai\n");
     return BITS(i, 25, 20); 
   } 
   if(BITS(i, 14, 12) == 1) {//slli
-    printf("slli\n");
+    //printf("slli\n");
     return BITS(i, 25, 20); 
   } 
 
