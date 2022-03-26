@@ -41,10 +41,7 @@ static word_t immI(uint32_t i)
     printf("slli\n");
     return BITS(i, 25, 20); 
   } 
-  if(BITS(i, 14, 12) == 1) {//srli
-    printf("srli\n");
-    return BITS(i, 25, 20); 
-  } 
+
   return SEXT(BITS(i, 31, 20), 12); 
 }
 static word_t immU(uint32_t i) { return SEXT(BITS(i, 31, 12), 20) << 12; }
@@ -66,40 +63,35 @@ static word_t immUJ(uint32_t i) {
   return SEXT((imm_1 | imm_2 | imm_3 | imm_4),21);
 }
 static word_t immSB(uint32_t i){
-  // word_t imm_1 = SEXT(BITS(i, 31, 31),1) << 12;
-  // word_t imm_2 = SEXT(BITS(i, 30, 25),6) << 5;
-  // word_t imm_3 = SEXT(BITS(i, 11, 8),4) << 1;
-  // word_t imm_4 = SEXT(BITS(i, 7, 7),1) << 11;
+
   word_t imm_1 = BITS(i, 31, 31) << 12;
   word_t imm_2 = BITS(i, 30, 25) << 5;
   word_t imm_3 = BITS(i, 11, 8) << 1;
   word_t imm_4 = BITS(i, 7, 7) << 11;
-  printf("imm_1 == %lx\n",imm_1);
-  printf("imm_2 == %lx\n",imm_2);
-  printf("imm_3 == %lx\n",imm_3);
-  printf("imm_4 == %lx\n",imm_4);
+  // printf("imm_1 == %lx\n",imm_1);
+  // printf("imm_2 == %lx\n",imm_2);
+  // printf("imm_3 == %lx\n",imm_3);
+  // printf("imm_4 == %lx\n",imm_4);
   offset = SEXT((imm_1 | imm_2 | imm_3 | imm_4),13);
   return offset;
 }
 
 
 static void decode_operand(Decode *s, word_t *dest, word_t *src1, word_t *src2, int type) {
-  static int k = 1;
   uint32_t i = s->isa.inst.val;
   int rd  = BITS(i, 11, 7);
   int rs1 = BITS(i, 19, 15);
   int rs2 = BITS(i, 24, 20);
   destR(rd);
   switch (type) {
-    case TYPE_R: src1R(rs1); src2R(rs2); printf("pc:%lx TYPE_R\n",s->pc);break;
-    case TYPE_I: src1R(rs1);     src2I(immI(i)); printf("pc:%lx TYPE_I\n",s->pc);break;
-    case TYPE_U: src1I(immU(i)); printf("pc:%lx TYPE_U\n",s->pc);break;
-    case TYPE_S: destI(immS(i)); src1R(rs1); src2R(rs2);printf("pc:%lx TYPE_S\n",s->pc);break;
-    case TYPE_UJ: src1I(immUJ(i)); printf("pc:%lx TYPE_UJ\n",s->pc);break;
-    case TYPE_SB: src1R(rs1); src2R(rs2); immSB(i); printf("pc:%lx TYPE_SB\n",s->pc);break;
+    case TYPE_R: src1R(rs1); src2R(rs2); break;
+    case TYPE_I: src1R(rs1);     src2I(immI(i)); break;
+    case TYPE_U: src1I(immU(i)); break;
+    case TYPE_S: destI(immS(i)); src1R(rs1); src2R(rs2);break;
+    case TYPE_UJ: src1I(immUJ(i));break;
+    case TYPE_SB: src1R(rs1); src2R(rs2); immSB(i); break;
     //case TYPE_LI: src1I(immI(i)); break;
   }
-  k++;
 }
 //| (SEXT(BITS(SEXT(BITS(i, 31, 12), 20),18, 11)) << 12) | (SEXT(BITS(SEXT(BITS(i, 31, 12), 20),10, 10)) << 11) (SEXT(BITS(SEXT(BITS(i, 31, 12), 20),9, 0)) << 1)
 
@@ -126,8 +118,8 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000000 ????? ????? 000 ????? 01110 11", addw   , R, R(dest) = SEXT(BITS(src1 + src2,31,0),32));
   INSTPAT("0100000 ????? ????? 000 ????? 01100 11", sub    , R, R(dest) = src1 - src2);
   INSTPAT("??????? ????? ????? 011 ????? 00100 11", sltiu  , I, R(dest) = (src1 < ((unsigned)src2)) ? 1 : 0);//??
-  INSTPAT("??????? ????? ????? 000 ????? 11000 11", beq    , SB, if(src1 == src2) s->dnpc = s->pc + offset,printf("beq offset:%lx\n",offset));
-  INSTPAT("??????? ????? ????? 001 ????? 11000 11", bne    , SB, if(src1 != src2) s->dnpc = s->pc + offset,printf("bne offset:%lx\n",offset));
+  INSTPAT("??????? ????? ????? 000 ????? 11000 11", beq    , SB, if(src1 == src2) s->dnpc = s->pc + offset);
+  INSTPAT("??????? ????? ????? 001 ????? 11000 11", bne    , SB, if(src1 != src2) s->dnpc = s->pc + offset);
   INSTPAT("??????? ????? ????? 000 ????? 00110 11", addiw  , I, R(dest) = SEXT(BITS(src1 + src2,31,0),32));
   
   //add-longlong.c
@@ -147,15 +139,46 @@ static int decode_exec(Decode *s) {
   //bubble-sort
   INSTPAT("000000? ????? ????? 001 ????? 00100 11", slli   , I, R(dest) = src1 << src2);
   INSTPAT("000000? ????? ????? 101 ????? 00100 11", srli   , I, R(dest) = src1 >> (unsigned)src2);
-  INSTPAT("??????? ????? ????? 101 ????? 11000 11", bge    , SB, if((signed)src1 >= (signed)src2) s->dnpc = s->pc + offset,printf("bge offset:%lx\n",offset));
+  INSTPAT("??????? ????? ????? 101 ????? 11000 11", bge    , SB, if((signed)src1 >= (signed)src2) s->dnpc = s->pc + offset);
   INSTPAT("??????? ????? ????? 010 ????? 01000 11", sw     , S, Mw(src1 + dest, 4, src2));
 
   //div.c
   INSTPAT("0000001 ????? ????? 000 ????? 01110 11", mulw   , R, R(dest) = SEXT(BITS(src1*src2,31,0),32));
   INSTPAT("0000001 ????? ????? 100 ????? 01110 11", divw   , R, R(dest) = SEXT((BITS(src1,31,0)/(signed)BITS(src2,31,0)),32));
 
-  //printf("before ebreak\n");
-  INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
+  //goldbach.c
+  INSTPAT("0000001 ????? ????? 110 ????? 01110 11", remw   , R, R(dest) = SEXT((BITS(src1,31,0)%(signed)BITS(src2,31,0)),32));
+
+  //if-else.c
+  INSTPAT("??????? ????? ????? 100 ????? 11000 11", blt    , SB, if((signed)src1 < (signed)src2) s->dnpc = s->pc + offset);
+  INSTPAT("0000000 ????? ????? 010 ????? 01100 11", slt    , R, R(dest) = (signed)src1 < (signed)src2);
+
+  //load-store.c
+  INSTPAT("??????? ????? ????? 001 ????? 00000 11", lh     , I, R(dest) = SEXT(BITS(Mr(src1 + src2, 2),15,0),16));
+  INSTPAT("??????? ????? ????? 101 ????? 00000 11", lhu    , I, R(dest) = BITS(Mr(src1 + src2, 2),15,0));
+  INSTPAT("0100000 ????? ????? 000 ????? 01110 11", subw   , R, R(dest) = SEXT(BITS((src1 - src2),31,0),32));
+  INSTPAT("??????? ????? ????? 001 ????? 01000 11", sh     , S, Mw(src1 + dest, 2, src2));
+
+  //movsx.c
+  INSTPAT("010000? ????? ????? 101 ????? 00110 11", sraiw  , I,  if(BITS(src2,5,5) == 0) R(dest) = SEXT(((signed)BITS(src1,31,0) >> src2),32));
+  INSTPAT("000000? ????? ????? 001 ????? 00110 11", slliw  , I,  if(BITS(src2,5,5) == 0) R(dest) = SEXT(BITS((src1 << src2),31,0),32));
+
+  //mul-longlong.c
+  INSTPAT("0000001 ????? ????? 000 ????? 01100 11", mul    , R, R(dest) = src1*src2);
+
+  //recuriion.c
+  INSTPAT("??????? ????? ????? ??? ????? 01101 11", lui    , U, R(dest) = src1);
+  
+  //shift.c
+  INSTPAT("000000? ????? ????? 101 ????? 00110 11", srliw  , I,  if(BITS(src2,5,5) == 0) R(dest) = SEXT((BITS(src1,31,0) >> src2),32));
+  INSTPAT("0100000 ????? ????? 101 ????? 01110 11", sraw   , R,  R(dest) = SEXT(((signed)BITS(src1,31,0) >> BITS(src2,4,0)),32));               
+  INSTPAT("0000000 ????? ????? 101 ????? 01110 11", srlw   , R,  R(dest) = SEXT((BITS(src1,31,0) >> BITS(src2,4,0)),32)); 
+  
+  //switch.c
+  INSTPAT("??????? ????? ????? 110 ????? 11000 11", bltu   , SB, if(src1 < src2) s->dnpc = s->pc + offset);
+  
+  //=========================
+  INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0 
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
   INSTPAT_END();
 
