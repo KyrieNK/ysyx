@@ -5,7 +5,14 @@
 #include "Vysyx22040413_SingleCpu___024root.h"
 #include "Vysyx22040413_SingleCpu__Syms.h"
 
+#include "verilated_dpi.h"
+
 //==========
+
+void Vysyx22040413_SingleCpu___024root____Vdpiexp_ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__publicSetBool_TOP(Vysyx22040413_SingleCpu__Syms* __restrict vlSymsp, CData/*0:0*/ in_bool) {
+    VL_DEBUG_IF(VL_DBG_MSGF("+    Vysyx22040413_SingleCpu___024root____Vdpiexp_ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__publicSetBool_TOP\n"); );
+    // Variables
+}
 
 VL_INLINE_OPT void Vysyx22040413_SingleCpu___024root___combo__TOP__2(Vysyx22040413_SingleCpu___024root* vlSelf) {
     if (false && vlSelf) {}  // Prevent unused

@@ -4,11 +4,13 @@
 #include "verilated.h"          
 #include "verilated_vcd_c.h"    
 
+#include "svdpi.h"
 #include "Vysyx22040413_SingleCpu.h"
+#include "Vysyx22040413_SingleCpu__Dpi.h"
 
 using namespace std;
 
-static Vysyx22040413_SingleCpu* top;
+static Vysyx22040413_SingleCpu* dut;
 static VerilatedVcdC* tfp;
 static vluint64_t main_time = 0;
 static const vluint64_t sim_time = 1000;
@@ -54,37 +56,43 @@ int main(int argc, char **argv)
   Verilated::commandArgs(argc, argv);
   Verilated::traceEverOn(true);
 
-  top = new Vysyx22040413_SingleCpu;
+  dut = new Vysyx22040413_SingleCpu;
   tfp = new VerilatedVcdC;
 
-  top->trace(tfp, 99);
-  tfp->open("obj_dir/top.vcd");
-	
+  dut->trace(tfp, 99);
+  tfp->open("obj_dir/dut.vcd");
+
+//   svBit value;
+//   //svSetScope(svGetScopeFromName("TOP.dut"));
+//   svScope scope = svGetScope();
+//   svGetNameFromScope(scope);
+//   publicSetBool(value);
+
 	while( !Verilated::gotFinish() && main_time < sim_time && inst_num <= 3)
 	{
-	  if( main_time % 10 == 0 ) top->clk = 0;
-	  if( main_time % 10 == 5 ) top->clk = 1;
+	  if( main_time % 10 == 0 ) dut->clk = 0;
+	  if( main_time % 10 == 5 ) dut->clk = 1;
 		  
 	  if( main_time < 10 )
 	  {
-		top->rst = 1;
+		dut->rst = 1;
 	  }
 	  else
 	  {
-	    top->rst = 0;
+	    dut->rst = 0;
 		if( main_time % 10 == 5 ){
 			inst_num ++;
-			top->inst = (top->inst_ena == 1) ? pmem_read(top->pc) : 0;
+			dut->inst = (dut->inst_ena == 1) ? pmem_read(dut->pc) : 0;
 		}
 	  }
-	  top->eval();
+	  dut->eval();
 	  tfp->dump(main_time);
 	  main_time++;
 	}
 		
   // clean
   tfp->close();
-  delete top;
+  delete dut;
   delete tfp;
   exit(0);
   return 0;

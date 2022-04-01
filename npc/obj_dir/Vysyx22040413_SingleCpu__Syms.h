@@ -16,6 +16,9 @@
 // INCLUDE MODULE CLASSES
 #include "Vysyx22040413_SingleCpu___024root.h"
 
+// DPI TYPES for DPI Export callbacks (Internal use)
+using Vysyx22040413_SingleCpu__Vcb_publicSetBool_t = void (*) (Vysyx22040413_SingleCpu__Syms* __restrict vlSymsp, CData/*0:0*/ in_bool);
+
 // SYMS CLASS (contains all model state)
 class Vysyx22040413_SingleCpu__Syms final : public VerilatedSyms {
   public:
@@ -27,6 +30,9 @@ class Vysyx22040413_SingleCpu__Syms final : public VerilatedSyms {
 
     // MODULE INSTANCE STATE
     Vysyx22040413_SingleCpu___024root TOP;
+
+    // SCOPE NAMES
+    VerilatedScope __Vscope_ysyx22040413_SingleCpu__ysyx22040413_IDU;
 
     // CONSTRUCTORS
     Vysyx22040413_SingleCpu__Syms(VerilatedContext* contextp, const char* namep, Vysyx22040413_SingleCpu* modelp);
