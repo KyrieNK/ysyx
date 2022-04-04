@@ -65,12 +65,5 @@ assign rd_w_addr  =  ( rst == 1'b1 ) ? 0 : ( inst_type[4] == 1'b1 ? rd : 0);
 assign op1 = ( rst == 1'b1 ) ? 0 : ( inst_type[4] == 1'b1 ? rs1_data : 0);
 assign op2 = ( rst == 1'b1 ) ? 0 : ( inst_type[4] == 1'b1 ? {{52{imm[11]}},imm} : 0);
 
-export "DPI-C" task publicSetBool;
-
-
-task publicSetBool;
-   input bit in_bool;
-   bit var_bool = in_bool;
-endtask
 
 endmodule

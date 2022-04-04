@@ -5,8 +5,6 @@
 #include "Vysyx22040413_SingleCpu___024root.h"
 #include "Vysyx22040413_SingleCpu__Syms.h"
 
-#include "verilated_dpi.h"
-
 //==========
 
 

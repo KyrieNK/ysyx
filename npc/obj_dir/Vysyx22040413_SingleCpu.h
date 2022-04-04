@@ -9,7 +9,6 @@
 #define VERILATED_VYSYX22040413_SINGLECPU_H_  // guard
 
 #include "verilated_heavy.h"
-#include "svdpi.h"
 
 class Vysyx22040413_SingleCpu__Syms;
 class Vysyx22040413_SingleCpu___024root;
@@ -72,9 +71,6 @@ class Vysyx22040413_SingleCpu VL_NOT_FINAL {
     VerilatedContext* contextp() const;
     /// Retrieve name of this model instance (as passed to constructor).
     const char* name() const;
-
-    /// DPI Export functions
-    static void publicSetBool(svBit in_bool);
 } VL_ATTR_ALIGNED(VL_CACHE_LINE_BYTES);
 
 #endif  // guard
