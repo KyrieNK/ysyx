@@ -10,6 +10,7 @@ void init_sdb();
 void init_disasm(const char *triple);
 void init_wp_pool();
 
+
 static void welcome() {
   Log("Trace: %s", MUXDEF(CONFIG_TRACE, ASNI_FMT("ON", ASNI_FG_GREEN), ASNI_FMT("OFF", ASNI_FG_RED)));
   IFDEF(CONFIG_TRACE, Log("If trace is enabled, a log file will be generated "
@@ -116,6 +117,7 @@ void init_monitor(int argc, char *argv[]) {
 
   /* Initialize the watchpoint pool. */
   init_wp_pool();
+  
 
   IFDEF(CONFIG_ITRACE, init_disasm(
     MUXDEF(CONFIG_ISA_x86,     "i686",

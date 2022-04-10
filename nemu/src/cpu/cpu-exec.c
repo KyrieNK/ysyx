@@ -9,6 +9,7 @@
  * You can modify this value as you want.
  */
 #define MAX_INST_TO_PRINT 10
+#define BUFFER_SIZE 4
 
 CPU_state cpu = {};
 uint64_t g_nr_guest_inst = 0;
@@ -17,10 +18,44 @@ static bool g_print_step = false;
 
 void device_update();
 
+static char ring_buffer[BUFFER_SIZE][128];
+static int  ring_cnt = 0;
+static bool ring_flag = 0;
+
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
-  if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
+  //if (ITRACE_COND) { log_write("%s\n", _this->logbuf); }
+  if (ITRACE_COND){
+      if(nemu_state.state == NEMU_ABORT){
+        //printf("ring cnt = %d\n",ring_cnt);
+        if(ring_cnt == 0) ring_cnt = BUFFER_SIZE - 1;
+        else ring_cnt = ring_cnt - 1;
+
+        if(ring_flag == 1){
+          for(int i=ring_cnt+1;i<BUFFER_SIZE;i++){
+            log_write("   %s\n", ring_buffer[i]);
+            //printf("   111111 %s\n",ring_buffer[i]);
+          }
+          for(int i=0;i<=ring_cnt;i++){
+            if(i==ring_cnt)
+            {
+              log_write("-> %s\n", ring_buffer[i]);
+              //printf("-> 111111 %s\n",ring_buffer[i]);
+            }
+            else log_write("   %s\n", ring_buffer[i]);
+            //printf("   222222 %s\n",ring_buffer[i]);
+          }
+        }
+        else{
+          for(int i=0;i<ring_cnt;i++){
+            log_write("   %s\n", ring_buffer[i]);
+          }
+        }
+    }
+  }
 #endif
+  
+
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 
@@ -33,13 +68,13 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   }
 }
 
-
 static void exec_once(Decode *s, vaddr_t pc) {
   s->pc = pc;
   s->snpc = pc;
   isa_exec_once(s);
   cpu.pc = s->dnpc;
 #ifdef CONFIG_ITRACE
+
   char *p = s->logbuf;
   p += snprintf(p, sizeof(s->logbuf), FMT_WORD ":", s->pc);
   int ilen = s->snpc - s->pc;
@@ -58,6 +93,16 @@ static void exec_once(Decode *s, vaddr_t pc) {
   void disassemble(char *str, int size, uint64_t pc, uint8_t *code, int nbyte);
   disassemble(p, s->logbuf + sizeof(s->logbuf) - p,
       MUXDEF(CONFIG_ISA_x86, s->snpc, s->pc), (uint8_t *)&s->isa.inst.val, ilen);
+
+  memset(ring_buffer[ring_cnt],'\0',sizeof(ring_buffer[ring_cnt]));
+  sprintf(ring_buffer[ring_cnt],"%s",s->logbuf);
+ // printf("ring_cnt == %d p == %s\n",ring_cnt,s->logbuf);
+  ring_cnt++;
+  if(ring_cnt == BUFFER_SIZE ) {
+    ring_cnt = 0;
+    ring_flag = 1;
+  }
+  //wirteRingbuffer(s->logbuf,1);
 #endif
 }
 
@@ -112,6 +157,7 @@ void cpu_exec(uint64_t n) {
            (nemu_state.halt_ret == 0 ? ASNI_FMT("HIT GOOD TRAP", ASNI_FG_GREEN) :
             ASNI_FMT("HIT BAD TRAP", ASNI_FG_RED))),
           nemu_state.halt_pc);
+      
       // fall through
     case NEMU_QUIT: statistic();
   }
