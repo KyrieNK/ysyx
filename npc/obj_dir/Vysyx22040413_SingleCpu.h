@@ -9,6 +9,7 @@
 #define VERILATED_VYSYX22040413_SINGLECPU_H_  // guard
 
 #include "verilated_heavy.h"
+#include "svdpi.h"
 
 class Vysyx22040413_SingleCpu__Syms;
 class Vysyx22040413_SingleCpu___024root;

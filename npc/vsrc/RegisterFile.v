@@ -20,7 +20,10 @@ module RegisterFile(
 
     // 32 registers
 	reg [`REG_BUS] 	regs[0 : 31];
-	
+
+	import "DPI-C" function void set_gpr_ptr(input logic [63:0] a []);
+	initial set_gpr_ptr(regs);  // rf为通用寄存器的二维数组变量
+
 	always @(posedge clk) 
 	begin
 		if ( rst == 1'b1 ) 

@@ -16,6 +16,8 @@
 // INCLUDE MODULE CLASSES
 #include "Vysyx22040413_SingleCpu___024root.h"
 
+// DPI TYPES for DPI Export callbacks (Internal use)
+
 // SYMS CLASS (contains all model state)
 class Vysyx22040413_SingleCpu__Syms final : public VerilatedSyms {
   public:

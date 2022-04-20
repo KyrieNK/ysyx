@@ -3,67 +3,181 @@
 
 `include "ysyx22040413_para.v"
 
-module ysyx22040413_IDU (
+module ysyx22040413_IDU(
     input wire rst,
-    input wire [31 : 0] inst,
-    input wire [`REG_BUS] rs1_data,
-    input wire [`REG_BUS] rs2_data,
+    input wire [`RV64_INST_WIDTH-1:0] inst,
+    input wire [`RV64_DATA_WIDTH-1:0] pc,
+    input wire [`RV64_RFDATA_WIDTH-1:0] rs1data,
+    input wire [`RV64_RFDATA_WIDTH-1:0] rs2data,
 
-    output wire rs1_r_ena,
-    output wire [4 : 0]rs1_r_addr,
-    output wire rs2_r_ena,
-    output wire [4 : 0]rs2_r_addr,
-    output wire rd_w_ena,
-    output wire [4 : 0]rd_w_addr,
+    output wire rs1en,
+    output wire rs2en,
+    output wire rdwen,
+    output wire [`RV64_RFIDX_WIDTH-1:0] rs1idx,
+    output wire [`RV64_RFIDX_WIDTH-1:0] rs2idx,
+    output wire [`RV64_RFIDX_WIDTH-1:0] rdwidx,
 
-    output wire [4 : 0] inst_type,
-    output wire [7 : 0] inst_opcode,
-    output wire [`REG_BUS] op1,
-    output wire [`REG_BUS] op2
+    output wire [`RV64_DATA_WIDTH-1:0] alu_op1,
+    output wire [`RV64_DATA_WIDTH-1:0] alu_op2,
+    
+    output wire [`RV64_DATA_WIDTH-1:0] pc_op1,
+    output wire [`RV64_DATA_WIDTH-1:0] pc_op2,
+
+    output wire pc_update,
+    output wire jalr,
+    output wire alu_add
 );
 
-wire [6  :  0] opcode;
-wire [4  :  0] rd;
-wire [2  :  0] func3;
-wire [4  :  0] rs1;
-wire [11 :  0] imm;
+wire [6:0] rv64_opcode = inst[6:0];
+wire [4:0] rv64_rd     = inst[11:7];
+wire [2:0] rv64_func3  = inst[14:12];
+wire [4:0] rv64_rs1    = inst[19:15];
+wire [4:0] rv64_rs2    = inst[24:20];
+wire [6:0] rv64_func7  = inst[31:25];
 
-assign opcode = inst[6  :  0];
-assign rd     = inst[11 :  7];
-assign func3  = inst[14 : 12];
-assign rs1    = inst[19 : 15];
-assign imm    = inst[31 : 20];
+wire rv64_opcode_1_0_00  = (rv64_opcode[1:0] == 2'b00);
+wire rv64_opcode_1_0_01  = (rv64_opcode[1:0] == 2'b01);
+wire rv64_opcode_1_0_10  = (rv64_opcode[1:0] == 2'b10);
+wire rv64_opcode_1_0_11  = (rv64_opcode[1:0] == 2'b11);
 
-//I-TYPE
-wire inst_addi = ~opcode[2] & ~opcode[3] & opcode[4] & ~opcode[5] & ~opcode[6]
-                & ~func3[0] & ~func3[1] & ~func3[2];
+wire rv64_opcode_4_2_000 = (rv64_opcode[4:2] == 3'b000);
+wire rv64_opcode_4_2_001 = (rv64_opcode[4:2] == 3'b001);
+wire rv64_opcode_4_2_010 = (rv64_opcode[4:2] == 3'b010);
+wire rv64_opcode_4_2_011 = (rv64_opcode[4:2] == 3'b011);
+wire rv64_opcode_4_2_100 = (rv64_opcode[4:2] == 3'b100);
+wire rv64_opcode_4_2_101 = (rv64_opcode[4:2] == 3'b101);
+wire rv64_opcode_4_2_111 = (rv64_opcode[4:2] == 3'b111);
 
-//arith inst : 10000
-//logic inst : 01000
-//load-store : 00100
-//j     inst : 00010
-//sys   inst : 00001
-assign inst_type[4] = ( rst == 1'b1 ) ? 0 : inst_addi;
+wire rv64_opcode_6_5_00  = (rv64_opcode[6:5] == 2'b00);
+wire rv64_opcode_6_5_01  = (rv64_opcode[6:5] == 2'b01);
+wire rv64_opcode_6_5_10  = (rv64_opcode[6:5] == 2'b10);
+wire rv64_opcode_6_5_11  = (rv64_opcode[6:5] == 2'b11);
 
-assign inst_opcode[0] = ( rst == 1'b1 ) ? 0 : inst_addi;
-assign inst_opcode[1] = ( rst == 1'b1 ) ? 0 : 0;
-assign inst_opcode[2] = ( rst == 1'b1 ) ? 0 : 0;
-assign inst_opcode[3] = ( rst == 1'b1 ) ? 0 : 0;
-assign inst_opcode[4] = ( rst == 1'b1 ) ? 0 : inst_addi;
-assign inst_opcode[5] = ( rst == 1'b1 ) ? 0 : 0;
-assign inst_opcode[6] = ( rst == 1'b1 ) ? 0 : 0;
-assign inst_opcode[7] = ( rst == 1'b1 ) ? 0 : 0;
+wire rv64_func3_000 = (rv64_func3 == 3'b000);
+wire rv64_func3_001 = (rv64_func3 == 3'b001);
+wire rv64_func3_010 = (rv64_func3 == 3'b010);
+wire rv64_func3_011 = (rv64_func3 == 3'b011);
+wire rv64_func3_100 = (rv64_func3 == 3'b100);
+wire rv64_func3_101 = (rv64_func3 == 3'b101);
+wire rv64_func3_110 = (rv64_func3 == 3'b110);
+wire rv64_func3_111 = (rv64_func3 == 3'b111);
 
-assign rs1_r_ena  =  ( rst == 1'b1 ) ? 0 : inst_type[4];
-assign rs1_r_addr =  ( rst == 1'b1 ) ? 0 : ( inst_type[4] == 1'b1 ? rs1 : 0);
-assign rs2_r_ena  =  0;
-assign rs2_r_addr =  0;
+wire rv64_func7_0000000 = (rv64_func7 == 7'b0000000);
+wire rv64_func7_0100000 = (rv64_func7 == 7'b0100000);
+wire rv64_func7_0000001 = (rv64_func7 == 7'b0000001);
+wire rv64_func7_0000101 = (rv64_func7 == 7'b0000101);
+wire rv64_func7_0001001 = (rv64_func7 == 7'b0001001);
+wire rv64_func7_0001101 = (rv64_func7 == 7'b0001101);
+wire rv64_func7_0010101 = (rv64_func7 == 7'b0010101);
+wire rv64_func7_0100001 = (rv64_func7 == 7'b0100001);
+wire rv64_func7_0010001 = (rv64_func7 == 7'b0010001);
+wire rv64_func7_0101101 = (rv64_func7 == 7'b0101101);
+wire rv64_func7_1111111 = (rv64_func7 == 7'b1111111);
+wire rv64_func7_0000100 = (rv64_func7 == 7'b0000100); 
+wire rv64_func7_0001000 = (rv64_func7 == 7'b0001000); 
+wire rv64_func7_0001100 = (rv64_func7 == 7'b0001100); 
+wire rv64_func7_0101100 = (rv64_func7 == 7'b0101100); 
+wire rv64_func7_0010000 = (rv64_func7 == 7'b0010000); 
+wire rv64_func7_0010100 = (rv64_func7 == 7'b0010100); 
+wire rv64_func7_1100000 = (rv64_func7 == 7'b1100000); 
+wire rv64_func7_1110000 = (rv64_func7 == 7'b1110000); 
+wire rv64_func7_1010000 = (rv64_func7 == 7'b1010000); 
+wire rv64_func7_1101000 = (rv64_func7 == 7'b1101000); 
+wire rv64_func7_1111000 = (rv64_func7 == 7'b1111000); 
+wire rv64_func7_1010001 = (rv64_func7 == 7'b1010001);  
+wire rv64_func7_1110001 = (rv64_func7 == 7'b1110001);  
+wire rv64_func7_1100001 = (rv64_func7 == 7'b1100001);  
+wire rv64_func7_1101001 = (rv64_func7 == 7'b1101001);  
 
-assign rd_w_ena   =  ( rst == 1'b1 ) ? 0 : inst_type[4];
-assign rd_w_addr  =  ( rst == 1'b1 ) ? 0 : ( inst_type[4] == 1'b1 ? rd : 0);
+wire rv64_op_imm = rv64_opcode_6_5_00 & rv64_opcode_4_2_100;
+wire rv64_store = rv64_opcode_6_5_01 & rv64_opcode_4_2_000 & rv64_opcode_1_0_11; 
 
-assign op1 = ( rst == 1'b1 ) ? 0 : ( inst_type[4] == 1'b1 ? rs1_data : 0);
-assign op2 = ( rst == 1'b1 ) ? 0 : ( inst_type[4] == 1'b1 ? {{52{imm[11]}},imm} : 0);
+//I-type Instruction
+wire rv64_addi = rv64_op_imm & rv64_func3_000;
 
+//U-type Instruction
+wire rv64_auipc = rv64_opcode_6_5_00 & rv64_opcode_4_2_101 & rv64_opcode_1_0_11; 
+wire rv64_lui   = rv64_opcode_6_5_01 & rv64_opcode_4_2_101 & rv64_opcode_1_0_11; 
+
+//J-type Instruction
+wire rv64_jal  =  rv64_opcode_6_5_11 & rv64_opcode_4_2_011 & rv64_opcode_1_0_11; 
+wire rv64_jalr =  rv64_opcode_6_5_11 & rv64_opcode_4_2_001 & rv64_opcode_1_0_11; 
+
+//S-type Instuction
+wire rv64_sd = rv64_store & rv64_func3_011;
+
+wire rv64_imm_sel_i = rv64_op_imm;
+wire rv64_imm_sel_u = rv64_auipc | rv64_lui;
+wire rv64_imm_sel_j = rv64_jal;
+
+wire [`RV64_XLEN-1:0] rv64_i_imm = {
+                                     {52{inst[31]}}
+                                   , inst[31:20]
+                                   };
+
+wire [`RV64_XLEN-1:0] rv64_u_imm = {
+                                     {40{inst[31]}}
+                                   , inst[31:20]
+                                   , 12'b0
+                                   };
+
+wire [`RV64_XLEN-1:0] rv64_j_imm = {
+                                     {43{inst[31]}} 
+                                   , inst[31] 
+                                   , inst[19:12]
+                                   , inst[20] 
+                                   , inst[30:21] 
+                                   , 1'b0
+                                   };
+
+
+wire [`RV64_XLEN-1:0] rv64_imm = 
+                            ({`RV64_XLEN{rv64_imm_sel_i}} & rv64_i_imm)
+                          | ({`RV64_XLEN{rv64_imm_sel_u}} & rv64_u_imm)
+                          ;
+
+wire rv64_need_imm = 
+                    rv64_imm_sel_i
+                  | rv64_imm_sel_u
+                  ;
+
+// wire [`RV64_XLEN-1:0] rv64_pc_imm = ({`RV64_XLEN{rv64_imm_sel_u}} & rv64_u_imm);
+
+assign pc_update = rv64_jal | rv64_jalr;
+
+wire rv64_need_rs1 = rv64_addi | rv64_jalr | rv64_sd; 
+wire rv64_need_rs2 = rv64_sd;
+wire rv64_need_rd  = rv64_addi | rv64_auipc | rv64_lui | rv64_jal | rv64_jalr;
+
+assign alu_op1 =  
+                ({`RV64_XLEN{rv64_addi     }} & rs1data)
+              | ({`RV64_XLEN{rv64_auipc    }} & pc)
+              | ({`RV64_XLEN{rv64_jal      }} & pc)
+              | ({`RV64_XLEN{rv64_jalr     }} & pc)
+              ;
+
+assign alu_op2 =  
+                ({`RV64_XLEN{rv64_addi     }} & rv64_imm)
+              | ({`RV64_XLEN{rv64_auipc    }} & rv64_u_imm)
+              | ({`RV64_XLEN{rv64_jal      }} & 4)
+              | ({`RV64_XLEN{rv64_jalr     }} & 4)
+              ;
+
+assign pc_op1 = ({`RV64_XLEN{rv64_jal  }} & pc) 
+              | ({`RV64_XLEN{rv64_jalr }} & rs1data) 
+              ;
+assign pc_op2 = ({`RV64_XLEN{rv64_jal  }} & rv64_j_imm) 
+              | ({`RV64_XLEN{rv64_jalr }} & rv64_i_imm) 
+              ;
+
+assign rs1en = (rst == 1'b1) ? 1'b0 : rv64_need_rs1;
+assign rs2en = (rst == 1'b1) ? 1'b0 : rv64_need_rs2;
+assign rdwen = (rst == 1'b1) ? 1'b0 : rv64_need_rd;
+
+assign rs1idx = rv64_rs1;
+assign rs2idx = rv64_rs2;
+assign rdwidx = rv64_rd;
+
+assign alu_add = rv64_addi;
 
 endmodule

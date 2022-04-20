@@ -26,11 +26,18 @@ VL_MODULE(Vysyx22040413_SingleCpu___024root) {
     VL_OUT64(pc,63,0);
 
     // LOCAL SIGNALS
-    CData/*4:0*/ ysyx22040413_SingleCpu__DOT__rd_w_addr;
-    CData/*4:0*/ ysyx22040413_SingleCpu__DOT__inst_type;
-    CData/*7:0*/ ysyx22040413_SingleCpu__DOT__inst_opcode;
-    CData/*0:0*/ ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__inst_addi;
-    QData/*63:0*/ ysyx22040413_SingleCpu__DOT__rd_data;
+    CData/*0:0*/ ysyx22040413_SingleCpu__DOT__jalr;
+    CData/*0:0*/ ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__rv64_op_imm;
+    CData/*0:0*/ ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__rv64_addi;
+    CData/*0:0*/ ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__rv64_auipc;
+    CData/*0:0*/ ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__rv64_lui;
+    CData/*0:0*/ ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__rv64_jal;
+    CData/*0:0*/ ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__rv64_jalr;
+    CData/*0:0*/ ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__rv64_imm_sel_u;
+    QData/*63:0*/ ysyx22040413_SingleCpu__DOT__r_data1;
+    QData/*63:0*/ ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__rv64_i_imm;
+    QData/*63:0*/ ysyx22040413_SingleCpu__DOT__ysyx22040413_IDU__DOT__rv64_u_imm;
+    QData/*63:0*/ ysyx22040413_SingleCpu__DOT__ysyx22040413_EXU__DOT__pc_res_1;
     VlUnpacked<QData/*63:0*/, 32> ysyx22040413_SingleCpu__DOT__RegisterFile__DOT__regs;
 
     // LOCAL VARIABLES

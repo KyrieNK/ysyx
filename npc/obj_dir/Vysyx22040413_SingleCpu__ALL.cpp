@@ -2,6 +2,7 @@
 #define VL_INCLUDE_OPT include
 #include "Vysyx22040413_SingleCpu.cpp"
 #include "Vysyx22040413_SingleCpu___024root.cpp"
+#include "Vysyx22040413_SingleCpu__Dpi.cpp"
 #include "Vysyx22040413_SingleCpu__Trace.cpp"
 #include "Vysyx22040413_SingleCpu___024root__Slow.cpp"
 #include "Vysyx22040413_SingleCpu__Syms.cpp"
