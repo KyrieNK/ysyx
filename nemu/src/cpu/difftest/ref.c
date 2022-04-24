@@ -3,26 +3,42 @@
 #include <difftest-def.h>
 #include <memory/paddr.h>
 
-void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
-  assert(0);
-  // if(direction == DIFFTEST_TO_DUT){
-  //  // memcpy(host_to_guest(addr), buf, n);
-  // }
+static void diff_set_regs(CPU_state * dut )
+{    int i;
+    for (i=0;i<32;i++){
+        cpu.gpr[i] =dut->gpr[i];
+    }
+     cpu.pc=dut->pc;
+}
+static void diff_get_regs(CPU_state * dut  )
+{
+      int i;
+    for (i=0;i<32;i++){
+        dut->gpr[i] =cpu.gpr[i];
+    }
+     dut->pc=cpu.pc;
 
-  // if(direction == DIFFTEST_TO_REF){
-  //   //memcpy(guest_to_host(addr), buf, n);
-  // }
+}
+
+void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
+ size_t i;
+
+ if (direction == DIFFTEST_TO_REF) {
+
+      for(i=0;i<n;i++)
+      {
+      paddr_write((addr +i),1,  *((uint8_t *)(buf+i)) );
+        
+      }
+  }
 }
 
 void difftest_regcpy(void *dut, bool direction) {
-  if(direction == DIFFTEST_TO_DUT){
-    memcpy(dut, &cpu, DIFFTEST_REG_SIZE);
+   if (direction == DIFFTEST_TO_REF) {
+      diff_set_regs(dut);
+  } else {
+       diff_get_regs(dut);
   }
-
-  if(direction == DIFFTEST_TO_REF){
-    memcpy(&cpu, dut, DIFFTEST_REG_SIZE);
-  }
-  //assert(0);
 }
 
 void difftest_exec(uint64_t n) {
