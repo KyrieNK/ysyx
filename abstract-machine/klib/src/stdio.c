@@ -8,73 +8,116 @@
 
 void itoa(unsigned int n, char * buf);
 
-int printf(const char *fmt, ...) {
-  panic("Not implemented");
+int printf(const char *str, ...) {
+    //panic("Not implemented");
+        
+    if (str == NULL) return -1;
+  
+    int ret_num = 0;// 返回打印字符的个数
+    char* pStr = (char*)str;// 指向str
+    int ArgIntVal = 0;  // 接收整型
+    char* ArgStrVal = NULL;  // 接收字符型
+       
+    char buf[1024];
+    va_list pArgs; // 定义va_list类型指针，用于存储参数的地址
+    va_start(pArgs, str); // 初始化pArgs
+      
+    memset(buf, 0, sizeof(buf));
+    while (*pStr != '\0')
+    {
+        switch (*pStr)
+        {
+        case '\t':
+            putch(*pStr); ret_num += 4; break;
+        case '\r':
+            putch(*pStr); ret_num++; break;
+        case '\n':
+            putch(*pStr); ret_num++; break;
+        case '%':
+            pStr++;
+            // % 格式解析
+            switch (*pStr)
+            {
+            case '%':
+                putch('%');// %%，输出%
+                ret_num++;
+                pStr++;
+                break;
+            case 'c':
+                ArgIntVal = va_arg(pArgs, int);// %c，输出char
+                putch((char)ArgIntVal);
+                ret_num++;
+                pStr++;
+                break;
+            case 'd':
+                ArgIntVal = va_arg(pArgs, int);// %d，输出char
+
+                // putch((char)ArgIntVal);
+                //  itoa(ArgIntVal)
+                // ret_num++;
+                //  pStr++;
+                // break;
+
+                 if(ArgIntVal < 0)
+                  {
+                      putch('-');
+
+                      ret_num++  ;
+                      ArgIntVal = -ArgIntVal;
+                  }
+                    
+                  itoa(ArgIntVal, buf)  ;
+                  int i;
+                   //ret_num += strlen(buf);  
+                   for(i=0;i<=strlen(buf) ; i++)           
+                   {
+
+                       putch(buf[i]);
+
+                   }
+                    //   while (*buf!='\0')
+                    //    {
+                    //        putch('f');
+                    //       // ArgStrVal++;
+                    //         ret_num++;
+                    //    }
+
+                       pStr++; 
+
+                       break;
+
+            case 's':
+                // 接收字符
+                ArgStrVal = va_arg(pArgs, char*);
+                ret_num += strlen(ArgStrVal);
+                while (*ArgStrVal)
+                {
+                    putch(*ArgStrVal);
+                    ArgStrVal++;
+                }
+
+                pStr++;
+                break;
+
+            default:
+                break;
+            }
+
+
+        default:
+            putch(*pStr); ret_num++;
+            break;
+        }
+        pStr++;
+    }
+    va_end(pArgs);// 结束取参数
+
+    return ret_num;
+
 
 }
 
 int vsprintf(char *str, const char *fmt, va_list ap) {
-  //panic("Not implemented");
-  // char *str;
-
-  // for(str = out; *fmt ; fmt++){
-  //   if(*fmt != '%'){
-  //     *str++ = *fmt;
-  //     continue;
-  //   }
-
-  //   // bool bFmt = true;
-  //   // while(bFmt)
-  //   // {
-  //   //     fmt++; /* This also skips first '%' */
-  //   //     switch (*fmt)
-  //   //     {
-  //   //         case '-': break;
-  //   //         case '+': break;
-  //   //         case ' ': break;
-  //   //         case '#': break;
-  //   //         case '0': break;
-  //   //         default:  bFmt = false;
-  //   //     }
-  //   // }
-
-  //   fmt++;
-  //   switch (*fmt)
-  //   {
-  //     case 'd':
-  //     {
-  //       int n = va_arg(ap,int);
-  //       // if(n < 0){
-  //       //   *str = '-';
-  //       //   str++;
-  //       //   n = -n;
-  //       // }
-  //       itoa(n,out);
-
-  //       memcpy(str,out,strlen(out));
-  //       str += strlen(out);
-  //       //str++;
-  //       break;
-  //     }
-  //    case 's':
-  //    {
-  //      char *s = va_arg(ap,char *);
-  //      memcpy(str, s, strlen(s));
-  //      str += strlen(s);
-  //      str++;
-  //      break;
-  //    }
-    
-  //   default:
-  //     // if(*fmt == '\n'){
-
-  //     // }
-  //     break;
-  //   }
-  // }
-  
-  // *str = '\0';
-  // return str - out;
     int count = 0;
     char c;
     char *s;

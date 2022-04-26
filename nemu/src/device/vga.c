@@ -3,7 +3,7 @@
 
 #define SCREEN_W (MUXDEF(CONFIG_VGA_SIZE_800x600, 800, 400))
 #define SCREEN_H (MUXDEF(CONFIG_VGA_SIZE_800x600, 600, 300))
-
+#define SYNC_ADDR 0xa0000104
 static uint32_t screen_width() {
   return MUXDEF(CONFIG_TARGET_AM, io_read(AM_GPU_CONFIG).width, SCREEN_W);
 }
@@ -17,6 +17,7 @@ static uint32_t screen_size() {
 }
 
 static void *vmem = NULL;
+static void *sync = NULL;
 static uint32_t *vgactl_port_base = NULL;
 
 #ifdef CONFIG_VGA_SHOW_SCREEN
@@ -58,6 +59,9 @@ static inline void update_screen() {
 void vga_update_screen() {
   // TODO: call `update_screen()` when the sync register is non-zero,
   // then zero out the sync register
+  int *sync_flag = 0 ;
+  memcpy(*sync_flag,(void *)SYNC_ADDR,1);
+  memset((void *)SYNC_ADDR,0,1);
 }
 
 void init_vga() {
@@ -69,8 +73,13 @@ void init_vga() {
   add_mmio_map("vgactl", CONFIG_VGA_CTL_MMIO, vgactl_port_base, 8, NULL);
 #endif
 
+  sync = new_space(1 * sizeof(uint32_t));
+  add_mmio_map("sync", SYNC_ADDR, sync, 1 * sizeof(uint32_t), NULL);
+
   vmem = new_space(screen_size());
   add_mmio_map("vmem", CONFIG_FB_ADDR, vmem, screen_size(), NULL);
+  
+
   IFDEF(CONFIG_VGA_SHOW_SCREEN, init_screen());
   IFDEF(CONFIG_VGA_SHOW_SCREEN, memset(vmem, 0, screen_size()));
 }
