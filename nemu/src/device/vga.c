@@ -17,7 +17,7 @@ static uint32_t screen_size() {
 }
 
 static void *vmem = NULL;
-static void *sync = NULL;
+//static void *sync = NULL;
 static uint32_t *vgactl_port_base = NULL;
 
 #ifdef CONFIG_VGA_SHOW_SCREEN
@@ -56,12 +56,15 @@ static inline void update_screen() {
 #endif
 #endif
 
-void vga_update_screen() {
+void vga_update_screen(uint32_t offset, int len, bool is_write) {
   // TODO: call `update_screen()` when the sync register is non-zero,
   // then zero out the sync register
-  int *sync_flag = 0 ;
-  memcpy(*sync_flag,(void *)SYNC_ADDR,1);
-  memset((void *)SYNC_ADDR,0,1);
+  // int *sync_flag = NULL ;
+  // memcpy(sync_flag,,1);
+  // printf("pre sync_flag == %d\n",*sync_flag);
+  // memset(sync, 0, 1);
+  //printf("post sync_flag == %d\n",*sync_flag);
+  if(is_write) update_screen();
 }
 
 void init_vga() {
@@ -70,16 +73,17 @@ void init_vga() {
 #ifdef CONFIG_HAS_PORT_IO
   add_pio_map ("vgactl", CONFIG_VGA_CTL_PORT, vgactl_port_base, 8, NULL);
 #else
-  add_mmio_map("vgactl", CONFIG_VGA_CTL_MMIO, vgactl_port_base, 8, NULL);
+  add_mmio_map("vgactl", CONFIG_VGA_CTL_MMIO, vgactl_port_base, 8, vga_update_screen);
 #endif
 
-  sync = new_space(1 * sizeof(uint32_t));
-  add_mmio_map("sync", SYNC_ADDR, sync, 1 * sizeof(uint32_t), NULL);
+  // sync = new_space(1);
+  // add_mmio_map("sync", SYNC_ADDR, sync, 1, NULL);
 
   vmem = new_space(screen_size());
   add_mmio_map("vmem", CONFIG_FB_ADDR, vmem, screen_size(), NULL);
   
-
+ // printf("=========add_mmio========\n");
+ // printf("vgactl_port_base == %p,sync == %p vmem == %p\n",vgactl_port_base,sync,vmem);
   IFDEF(CONFIG_VGA_SHOW_SCREEN, init_screen());
   IFDEF(CONFIG_VGA_SHOW_SCREEN, memset(vmem, 0, screen_size()));
 }
